@@ -11,11 +11,11 @@ def kkiter(model):
   KK iteration
   """
   raise NotImplementedError()
-  alpha = model.alpha(alpha_params)
-  k = model.k(k_params)
-  n = kkint(kkint_params)
-  transmission = model.transmission(transmission_params)
-  diff = transmission - transmission_target
+  # alpha = model.alpha(alpha_params)
+  # k = model.k(k_params)
+  # n = kkint(kkint_params)
+  # transmission = model.transmission(transmission_params)
+  # diff = transmission - transmission_target
 
 def calculate_n(model):
   """
