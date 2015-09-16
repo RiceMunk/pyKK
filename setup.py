@@ -51,6 +51,6 @@ RELEASE = 'dev' not in VERSION
 
 setup(name=PACKAGENAME,
       version=VERSION,
-      py_modules=[PACKAGENAME],
+      packages=[PACKAGENAME],
       cmdclass = {'test': PyTest},
       )
