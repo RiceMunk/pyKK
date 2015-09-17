@@ -30,3 +30,8 @@ def test_modelcreation_basic():
   assert testmodel.irat == testirat
   assert testmodel.args_alpha == ('x','y','duck')
   assert testmodel.args_irat == ('a','b','puppy')
+
+def test_modelcreation_hudgins():
+  #the Hudgins model
+  testmodel = pyKK.transmissionmodel.HudginsModel(1+1j)
+  assert testmodel.modelname == 'Hudgins 1993'

@@ -56,7 +56,7 @@ class GenericModel(BaseModel):
   """
   def __init__(self,modifier,modelname='Unknown Generic'):
     self.modifier=modifier
-    BaseModel.__init__(modelname=modelname,alpha=modified_alpha,irat=modified_irat)
+    BaseModel.__init__(self,modelname=modelname,alpha=self.modified_alpha,irat=self.modified_irat)
 
   def modified_alpha(self,**kwargs):
     return self.base_alpha(kwargs['d'],kwargs['irat'])+np.log(self.modifier(**kwargs))/kwargs['d']
@@ -71,10 +71,9 @@ class HudginsModel(GenericModel):
   between a vacuum (medium 0) and substrate (medium 2)
   """
   def __init__(self,m2,modelname='Hudgins 1993'):
-    raise NotImplementedError()
     self.m0 = 1.+0.j #complex refractive index for vacuum
     self.m2 = m2     #complex refractive index for substrate
-    GenericModel.__init__(self.Hudgins_modifier,modelname=modelname)
+    GenericModel.__init__(self,self.Hudgins_modifier,modelname=modelname)
 
   def Hudgins_modifier(d,m1,wavel):
     """
