@@ -1,4 +1,5 @@
 import numpy as np
+import inspect
 
 class BaseModel:
   """
@@ -8,7 +9,7 @@ class BaseModel:
   def __init__(self,
                 modelname='Unknown',
                 alpha=None,
-                irat =None
+                transmittance=None
               ):
     # raise NotImplementedError()
     self.modelname  = modelname
@@ -16,18 +17,24 @@ class BaseModel:
       self.alpha = self.base_alpha #default to base_alpha if none given
     else:
       self.alpha = alpha
-    if irat is None: # Set function for calculating I/I0
-      self.irat = self.base_irat #default to base_irat if none given
+    if transmittance is None: # Set function for calculating I/I0
+      self.transmittance = self.base_transmittance #default to base_transmittance if none given
     else:
-      self.irat  = irat
+      self.transmittance  = transmittance
     #construct lists containing required variable names for calculating alpha and I/I0
-    self.args_alpha = filter(lambda varname:varname!='self',self.alpha.func_code.co_varnames)
-    self.args_irat = filter(lambda varname:varname!='self',self.irat.func_code.co_varnames)
+    self.args_alpha = tuple(filter(lambda varname:varname!='self',inspect.getargspec(self.alpha).args))#self.alpha.func_code.co_varnames)
+    self.args_transmittance = tuple(filter(lambda varname:varname!='self',inspect.getargspec(self.transmittance).args))#self.transmittance.func_code.co_varnames)
+    # #check for extra arg vars from potential children:
+    # argvars = filter(lambda varname:varname!='args_alpha' and varname!='args_transmittance' and 'args_' in varname,locals().keys())
+    # print argvars
+    # if len(argvars)>0:
+    #   for cArgvar in argvars:
+    #     self.args_alpha+=locals()[cArgvar]
+    #     self.args_transmittance+=locals()[cArgvar]
+  def base_alpha(self,d,transmittance):
+    return (-1./d)*np.log(transmittance)
 
-  def base_alpha(self,d,irat):
-    return (-1./d)*np.log(irat)
-
-  def base_irat(self,d,alpha):
+  def base_transmittance(self,d,alpha):
     return np.exp(-alpha*d)
 
   def transmission_coeff(self,m1,m2):
@@ -51,18 +58,19 @@ class BaseModel:
 class GenericModel(BaseModel):
   """
   A generic transmission model following a pattern of alpha
-  and I/I0 which seems common in many transmission models found
+  and transmittance which seems common in many transmission models found
   in the literature.
   """
   def __init__(self,modifier,modelname='Unknown Generic'):
     self.modifier=modifier
-    BaseModel.__init__(self,modelname=modelname,alpha=self.modified_alpha,irat=self.modified_irat)
+    self.args_modifier=tuple(filter(lambda varname:varname!='self',inspect.getargspec(self.modifier).args))#self.modifier.func_code.co_varnames)
+    BaseModel.__init__(self,modelname=modelname,alpha=self.modified_alpha,transmittance=self.modified_transmittance)
 
   def modified_alpha(self,**kwargs):
-    return self.base_alpha(kwargs['d'],kwargs['irat'])+np.log(self.modifier(**kwargs))/kwargs['d']
+    return self.base_alpha(kwargs['d'],kwargs['transmittance'])+np.log(self.modifier(**kwargs))/kwargs['d']
 
-  def modified_irat(self,**kwargs):
-    return self.base_irat(kwargs['d'],kwargs['alpha'])*self.modifier(**kwargs)
+  def modified_transmittance(self,**kwargs):
+    return self.base_transmittance(kwargs['d'],kwargs['alpha'])*self.modifier(**kwargs)
 
 class HudginsModel(GenericModel):
   """
@@ -74,11 +82,15 @@ class HudginsModel(GenericModel):
     self.m0 = 1.+0.j #complex refractive index for vacuum
     self.m2 = m2     #complex refractive index for substrate
     GenericModel.__init__(self,self.Hudgins_modifier,modelname=modelname)
+    # self.args_alpha.append('m1')
+    # self.args_alpha.append('wavel')
+    # self.args_transmittance.append('m1')
+    # self.args_transmittance.append('wavel')
 
   def Hudgins_modifier(d,m1,wavel):
     """
     The coefficient that's common to the calcualtion of both
-    I/I0 and alpha for the Hudgins model
+    transmittance and alpha for the Hudgins model
     """
     t01 = transmission_coeff(self.m0,m1)
     t02 = transmission_coeff(self.m0,self.m2)
